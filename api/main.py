@@ -10,6 +10,7 @@ from .schemas import (
     CreateSession, DeliverSession,
     CreateExceptionEvent, DeliverExceptionEvent
 )
+from .engine import adjust_workout
 
 app = FastAPI()
 
@@ -133,3 +134,25 @@ def list_exceptions(session_id: UUID, db: Session = Depends(get_db)):
     """)
     rows = db.execute(q, {"session_id": str(session_id)}).mappings().all()
     return [dict(r) for r in rows]
+
+
+# WORKOUT ADJUSTMENTS
+
+@app.post("/sessions/{session_id}/apply-adjustment")
+def apply_adjustments(session_id: UUID, db: Session = Depends(get_db)):
+    q = text("""
+        SELECT *
+        FROM exception_events
+        WHERE session_id = :session_id
+    """)
+
+    events = db.execute(q, {"session_id": str(session_id)}).mappings().all()
+
+    all_adjustments = []
+    if not events:
+        return {"message": "No exceptions found for this workout."}
+    else:
+        for event in events:
+            all_adjustments.extend(adjust_workout(dict(event)))
+
+    return {"adjustments": all_adjustments}
