@@ -25,7 +25,8 @@ def adjust_workout(event):
             "exercise_name": event_exercise,
             "field": "load",
             "multiplier": multiplier,
-            "reason": "Too heavy"
+            "reason": "Too heavy",
+            "body_part": event_bodyarea
         })
     
     elif event_type == "too_light":
@@ -41,18 +42,43 @@ def adjust_workout(event):
             "exercise_name": event_exercise,
             "field": "load",
             "multiplier": multiplier,
-            "reason": "Too light"
+            "reason": "Too light",
+            "body_part": event_bodyarea
         })
 
     elif event_type == "pain":
-        # here: could also report severity of pain, but that introduces some considerations
-        # such as e.g.: high pain => switch exercise, low pain => lower weight, however, 
-        # if pain doesn't go away?
+        if event_severity == "high":
+            multiplier = 0.5
+        elif event_severity == "medium":
+            multiplier = 0.65
+        else:
+            # low
+            multiplier = 0.8
+
         adjustments.append({
             "exercise_name": event_exercise,
-            "field": "exercise_swap",
-            "multiplier": None,
-            "reason": f"Pain in {event_bodyarea}"
+            "field": "pain",
+            "multiplier": multiplier,
+            "reason": f"Pain in {event_bodyarea}",
+            "body_part": event_bodyarea
         })
 
     return adjustments
+
+def apply_adjustments(program_json, adjustments):
+    for adj in adjustments:
+        exercise_name = adj["exercise_name"]
+        field = adj["field"]
+        multiplier = adj("multiplier")
+
+        for day in program_json["days"]:
+            for exercise in day["exercises"]:
+
+                if exercise["name"] == exercise_name:
+
+                    if field == "load" and multiplier is not None:
+                        exercise["load"] = round(
+                            exercise["load"] * multiplier, 2
+                        )
+
+    return program_json

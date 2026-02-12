@@ -1,0 +1,22 @@
+{
+  "name": "PPL Beginner",
+  "program_json": {
+    "split": "PPL",
+    "days": [
+      {
+        "name": "Push",
+        "exercises": [
+          {"name": "Bench Press", "sets": 3, "reps": "5-8", "load": 80},
+          {"name": "Overhead Press", "sets": 3, "reps": "6-10", "load": 30}
+        ]
+      },
+      {
+        "name": "Pull",
+        "exercises": [
+          {"name": "Barbell Rows", "sets": 3, "reps": "5-8", "load": 60},
+          {"name": "Hammer Curls", "sets": 3, "reps": "6-10", "load": 15}
+        ]
+      }
+    ]
+  }
+}

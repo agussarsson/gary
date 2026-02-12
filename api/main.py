@@ -10,7 +10,7 @@ from .schemas import (
     CreateSession, DeliverSession,
     CreateExceptionEvent, DeliverExceptionEvent
 )
-from .engine import adjust_workout
+from .engine import adjust_workout, apply_adjustments
 
 app = FastAPI()
 
