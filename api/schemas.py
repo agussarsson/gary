@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 from uuid import UUID
-from typing import Optional
+from typing import Optional, Any
+from datetime import date
 
 class EventType(str, Enum):
     pain = "pain"
@@ -27,11 +28,48 @@ class BodyArea(str, Enum):
     lower_back = "lower_back"
     other = "other"
 
-class ExceptionEvent(BaseModel):
+class Source(str, Enum):
+    manual = "manual"
+    rules = "rules"
+    model = "model"
+    llm = "llm"
+
+class CreateProgram(BaseModel):
+    name: str = Field(min_length=1)
+    program_json: dict[str, Any]
+
+class DeliverProgram(BaseModel):
+    id: UUID
+    name: str
+    program_json: dict[str, Any]
+
+class CreateSession(BaseModel):
+    program_id: UUID
+    session_date: Optional[date] = None
+
+class DeliverSession(BaseModel):
+    id: UUID
+    program_id: UUID
+    session_date: date
+    completed: bool
+
+class CreateExceptionEvent(BaseModel):
     session_id: UUID
     exercise_name: str
     event_type: EventType
     severity: Severity
     body_area: BodyArea = BodyArea.none
     note: Optional[str] = None
-    confidence: float
+    confidence: Optional[float] = Field(default=None, ge=0, le=1)
+    source: Source = Source.manual
+
+class DeliverExceptionEvent(BaseModel):
+    id: UUID
+    session_id: UUID
+    exercise_name: str
+    event_type: EventType
+    severity: Severity
+    body_area: BodyArea = BodyArea.none
+    note: Optional[str]
+    confidence: Optional[float]
+    source: Source
