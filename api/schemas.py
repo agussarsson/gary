@@ -9,6 +9,8 @@ class EventType(str, Enum):
     too_heavy = "too_heavy"
     too_light = "too_light"
     time = "time"
+    # maybe add an option for when time is not a limiting factor,
+    # but the user instead have more time available than what the workout required.
     equipment = "equipment"
     other = "other"
 
