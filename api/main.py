@@ -140,19 +140,75 @@ def list_exceptions(session_id: UUID, db: Session = Depends(get_db)):
 
 @app.post("/sessions/{session_id}/apply-adjustment")
 def apply_adjustments(session_id: UUID, db: Session = Depends(get_db)):
-    q = text("""
-        SELECT *
-        FROM exception_events
-        WHERE session_id = :session_id
-    """)
+    
+    session_row = db.execute(
+        text("SELECT id, program_id FROM sessions WHERE id = :id"),
+        {"id": str(session_id)}
+    ).mappings().first()
 
-    events = db.execute(q, {"session_id": str(session_id)}).mappings().all()
+    if not session_row:
+        raise HTTPException(status_code=404, detail="Session Not Found.")
+    
+    program_id = session_row["program_id"]
+    
+    program_row = db.execute(
+        text("SELECT id, program_json FROM programs WHERE id = :id"),
+        {"id": str(program_id)}
+    ).mappings().first()
+
+    if not program_row:
+        raise HTTPException(status_code=404, detail="Program Not Found.")
+
+    program_json = program_row["program_json"]
+
+    events = db.execute(
+        text("""
+            SELECT *
+            FROM exception_events
+            WHERE session_id = :sid
+            ORDER BY created_at ASC
+        """),
+        {"sid": str("session_id")}
+    ).mappings().all()
+
+    if not events:
+        return {"message": "No exceptions found",
+                "program_json": program_json,
+                "adjustments": []
+                }
 
     all_adjustments = []
-    if not events:
-        return {"message": "No exceptions found for this workout."}
-    else:
-        for event in events:
-            all_adjustments.extend(adjust_workout(dict(event)))
+    
+    for event in events:
+        all_adjustments.extend(adjust_workout(dict(event)))
 
-    return {"adjustments": all_adjustments}
+    adjusted_program = apply_adjustments(program_json, all_adjustments)
+
+    db.execute(
+        text("UPDATE programs SET program_json = CAST(:pj AS jsonb) WHERE id = :id"),
+        {"pj": json.dumps(adjusted_program), "id": program_id}
+    )
+
+    for adj in all_adjustments:
+        db.execute(
+            text("""
+                INSERT INTO adjustments (program_id, exercise_name, field, old_value, new_value, reason)
+                VALUES (:program_id, :exercise_name, :field, :old_value, :new_value, :reason)
+            """),
+            {
+                "program_id": program_id,
+                "exercise_name": adj["exercise_name"],
+                "field": adj["field"],
+                "old_value": str(adj.get("old_value")) if adj.get("old_value") is not None else None,
+                "new_value": str(adj.get("new_value")) if adj.get("new_value") is not None else None,
+                "reason": adj.get("reason", "Adjustment applied"),
+            }
+        )
+
+    db.commit()
+
+    return {"program_id": program_id, "program_json": adjusted_program, "adjustments": all_adjustments}
+
+
+
+    # testa att det funkar att adjusta i dbn
