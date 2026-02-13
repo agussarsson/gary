@@ -15,6 +15,9 @@ from .engine import adjust_workout, apply_adjustments
 app = FastAPI()
 
 def get_db():
+    """
+    Establishes DB connection.
+    """
     db = SessionLocal()
     try:
         yield db
@@ -28,7 +31,7 @@ def health():
     return {"status": "ok"}
 
 
-# PROGRAMS
+# --- PROGRAMS ENDPOINTS ---
 
 @app.post("/programs", response_model=DeliverProgram)
 def create_program(payload: CreateProgram, db: Session = Depends(get_db)):
@@ -57,7 +60,7 @@ def get_program(program_id: UUID, db: Session = Depends(get_db)):
         return dict(row)
 
 
-# SESSIONS
+# --- SESSIONS ENDPOINTS ---
 
 @app.post("/sessions", response_model=DeliverSession)
 def create_session(payload: CreateSession, db: Session = Depends(get_db)):
@@ -95,7 +98,7 @@ def get_session(session_id: UUID, db: Session = Depends(get_db)):
     return dict(row)
 
 
-# EXCEPTIONS (regarding the workout)
+# --- EXCEPTIONS (regarding the workout) ENDPOINTS ---
 
 @app.post("/exceptions", response_model=DeliverExceptionEvent)
 def create_exception(payload: CreateExceptionEvent, db: Session = Depends(get_db)):
@@ -136,7 +139,7 @@ def list_exceptions(session_id: UUID, db: Session = Depends(get_db)):
     return [dict(r) for r in rows]
 
 
-# WORKOUT ADJUSTMENTS
+# --- WORKOUT ADJUSTMENTS ENDPOINTS ---
 
 @app.post("/sessions/{session_id}/apply-adjustment")
 def apply_adjustments(session_id: UUID, db: Session = Depends(get_db)):

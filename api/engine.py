@@ -1,6 +1,17 @@
 
 
 def adjust_workout(event):
+    """
+    Algorithmicly decides how the workout should be updated based on the event.
+
+    params:
+        event :dict:
+            dictionary/json-type of an event
+    
+    returns:
+        adjustments :dict:
+            list of adjustments
+    """
 
     adjustments = []
 
@@ -66,6 +77,20 @@ def adjust_workout(event):
     return adjustments
 
 def apply_adjustments(program_json, adjustments):
+    """
+    Algorithmicly applies adjustments to a program.
+
+    params:
+        program_json :dict:
+            dictionary/json-type containing the full workout program
+    
+        adjustments :dict:
+            list of adjustments
+
+    returns:
+        program_json :dict:
+            updated workout program
+    """
     for adj in adjustments:
         exercise_name = adj["exercise_name"]
         field = adj["field"]
