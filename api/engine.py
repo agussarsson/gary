@@ -1,4 +1,11 @@
+import json
 
+try:
+    with open("api/aliases.json", "r", encoding="utf-8") as f:
+        ALIASES = json.load(f)
+except FileNotFoundError:
+    print("Alias file not found.")
+import re
 
 def adjust_workout(event):
     """
@@ -107,3 +114,80 @@ def apply_adjustments(program_json, adjustments):
                         )
 
     return program_json
+
+
+def normalize_text(s):
+    """
+    Normalizes text.
+    
+    params:
+        s :str: text-string to be normalized.
+    
+    returns:
+        normalized_str :str: the normalized string.
+    """
+    lowercase_str = s.lower()
+    # s = re.sub(r"[\s\-_]+", "", s)
+    normalized_str = re.sub(r"[^a-z0-9]", "", lowercase_str)
+    return normalized_str
+
+
+# print(normalize_text("bench and ohp felt heavy today, triceps were lightweight"))
+
+def decide_exercise_from_text(user_text, program_json):
+    # TODO: go through the text, look for exercises, 
+    # then go through the program and try to match exercises in the program
+    # then we have our exercises!
+    # same should be done for "severity" as well, and that requires
+    # yet another json file with severity expressions and their mappings
+    # :/
+
+    normalized_text = normalize_text(user_text)
+    print(normalized_text)
+
+    mentioned = []
+
+    for exercise, aliases in ALIASES.items():
+        if any(alias in normalized_text for alias in aliases):
+            mentioned.append(exercise)
+
+    print(mentioned)
+
+
+
+
+
+
+
+
+
+"""
+
+# Test example to find exercises from user text.
+
+program = {
+  "name": "PPL Beginner",
+  "program_json": {
+    "split": "PPL",
+    "days": [
+      {
+        "name": "Push",
+        "exercises": [
+          {"name": "Bench Press", "sets": 3, "reps": "5-8", "load": 80},
+          {"name": "Overhead Press", "sets": 3, "reps": "6-10", "load": 30}
+        ]
+      },
+      {
+        "name": "Pull",
+        "exercises": [
+          {"name": "Barbell Rows", "sets": 3, "reps": "5-8", "load": 60},
+          {"name": "Hammer Curls", "sets": 3, "reps": "6-10", "load": 15}
+        ]
+      }
+    ]
+  }
+}
+text = "bench and ohp felt heavy today, triceps were lightweight"
+
+decide_exercise_from_text(text, program)
+"""
