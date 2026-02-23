@@ -1,0 +1,195 @@
+{
+    "bench_press": [
+        "bench",
+        "bench press",
+        "benchpress",
+        "bench-press",
+        "bb bench",
+        "barbell bench",
+        "flat bench",
+        "flat barbell bench",
+        "bp"
+    ],
+    "incline_bench_press": [
+        "incline bench",
+        "incline bench press",
+        "incline benchpress",
+        "incline-bench",
+        "incline bb bench",
+        "incline bp"
+    ],
+    "decline_bench_press": [
+        "decline bench",
+        "decline bench press",
+        "decline benchpress"
+    ],
+    "dumbbell_bench_press": [
+        "db bench",
+        "dumbbell bench",
+        "dumbbell bench press",
+        "db bench press"
+    ],
+    "chest_fly": [
+        "fly",
+        "flies",
+        "chest fly",
+        "pec fly",
+        "pec deck",
+        "machine fly"
+    ],
+
+    "overhead_press": [
+        "ohp",
+        "overhead press",
+        "military press",
+        "shoulder press",
+        "barbell shoulder press",
+        "bb ohp"
+    ],
+    "dumbbell_shoulder_press": [
+        "db shoulder press",
+        "db press",
+        "dumbbell shoulder press"
+    ],
+    "lateral_raise": [
+        "lateral raise",
+        "side raise",
+        "side lateral",
+        "lat raise"
+    ],
+    "rear_delt_fly": [
+        "rear delt fly",
+        "reverse fly",
+        "rear delt raise"
+    ],
+
+    "deadlift": [
+        "deadlift",
+        "dead lift",
+        "dl",
+        "conventional deadlift"
+    ],
+    "romanian_deadlift": [
+        "rdl",
+        "romanian deadlift",
+        "stiff leg deadlift",
+        "stiff-leg deadlift"
+    ],
+    "barbell_row": [
+        "barbell row",
+        "bb row",
+        "bent over row",
+        "bent-over row",
+        "bor"
+    ],
+    "lat_pulldown": [
+        "lat pulldown",
+        "lat pull",
+        "pull down"
+    ],
+    "pull_up": [
+        "pullup",
+        "pull-up",
+        "pull up",
+        "chin over bar"
+    ],
+    "chin_up": [
+        "chinup",
+        "chin-up",
+        "chin up"
+    ],
+    "seated_cable_row": [
+        "cable row",
+        "seated row",
+        "seated cable row"
+    ],
+
+    "squat": [
+        "squat",
+        "back squat",
+        "bb squat",
+        "barbell squat"
+    ],
+    "front_squat": [
+        "front squat",
+        "fsq"
+    ],
+    "leg_press": [
+        "leg press",
+        "machine leg press"
+    ],
+    "leg_extension": [
+        "leg extension",
+        "quad extension"
+    ],
+    "leg_curl": [
+        "leg curl",
+        "hamstring curl",
+        "lying leg curl",
+        "seated leg curl"
+    ],
+    "hip_thrust": [
+        "hip thrust",
+        "barbell hip thrust",
+        "glute bridge",
+        "bb hip thrust"
+    ],
+    "lunge": [
+        "lunge",
+        "lunges",
+        "walking lunge",
+        "walking lunges"
+    ],
+    "calf_raise": [
+        "calf raise",
+        "calf raises",
+        "standing calf raise",
+        "seated calf raise"
+    ],
+
+    "barbell_curl": [
+        "bb curl",
+        "barbell curl",
+        "curl",
+        "bicep curl"
+    ],
+    "dumbbell_curl": [
+        "db curl",
+        "dumbbell curl",
+        "alternating curl"
+    ],
+    "hammer_curl": [
+        "hammer curl",
+        "hammer curls"
+    ],
+    "tricep_pushdown": [
+        "tricep pushdown",
+        "triceps pushdown",
+        "pushdown",
+        "cable pushdown"
+    ],
+    "skullcrusher": [
+        "skullcrusher",
+        "skull crushers",
+        "lying tricep extension"
+    ],
+    "dips": [
+        "dip",
+        "dips",
+        "parallel bar dips"
+    ],
+
+    "plank": [
+        "plank",
+        "front plank"
+    ],
+    "hanging_leg_raise": [
+        "hanging leg raise",
+        "leg raises",
+        "hanging knee raise"
+    ],
+    "cable_crunch": [
+        "cable crunch",
+        "ab crunch"
+    ]
+}
