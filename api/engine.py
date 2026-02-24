@@ -134,13 +134,23 @@ def normalize_text(s):
 
 # print(normalize_text("bench and ohp felt heavy today, triceps were lightweight"))
 
-def decide_exercise_from_text(user_text, program_json):
+def decide_exercise_from_text(user_text: str) -> list:
     # TODO: go through the text, look for exercises, 
     # then go through the program and try to match exercises in the program
     # then we have our exercises!
     # same should be done for "severity" as well, and that requires
     # yet another json file with severity expressions and their mappings
     # :/
+
+    """
+    Extracts all the exercises mentioned in the user's text.
+
+    params:
+        user_text: text-string describing how the exercise felt.
+    
+    returns:
+        mentioned: identified exercises, derived from aliases dictionary.
+    """
 
     normalized_text = normalize_text(user_text)
     print(normalized_text)
@@ -151,10 +161,30 @@ def decide_exercise_from_text(user_text, program_json):
         if any(alias in normalized_text for alias in aliases):
             mentioned.append(exercise)
 
-    print(mentioned)
+    return mentioned
 
 
+def construct_model_input(exercises: list, user_text: str) -> str:
+    
+    """
+    Normalizes text.
+    
+    params:
+        exercises: all exercises mentioned in the user_text.
+        user_text: text-string describing how the exercise felt.
+    
+    returns:
+        model_input: model-ready input (contains relevant information).
+    """
 
+    for exercise in exercises:
+        model_input = f"""
+        Exercise: {exercise}
+        Session exercises: {", ".join(exercises)}
+        User note: {user_text}
+        """
+    
+    return model_input
 
 
 
