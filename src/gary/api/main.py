@@ -171,7 +171,7 @@ def apply_adjustments(session_id: UUID, db: Session = Depends(get_db)):
             WHERE session_id = :sid
             ORDER BY created_at ASC
         """),
-        {"sid": str("session_id")}
+        {"sid": str(session_id)}
     ).mappings().all()
 
     if not events:
@@ -213,5 +213,3 @@ def apply_adjustments(session_id: UUID, db: Session = Depends(get_db)):
     return {"program_id": program_id, "program_json": adjusted_program, "adjustments": all_adjustments}
 
 
-
-    # testa att det funkar att adjusta i dbn

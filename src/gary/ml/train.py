@@ -4,18 +4,21 @@ import torch
 from torch.utils.data import DataLoader, random_split
 from transformers import get_linear_schedule_with_warmup
 
-from ml.model import MultiHeadClassifier
-from ml.dataset import ExceptionsDataset, LabelMaps
-
+from gary.ml.model import MultiHeadClassifier
+from gary.ml.dataset import ExceptionsDataset, LabelMaps
+import gary
+from pathlib import Path
 
 EVENT_TYPES = ["none", "too_heavy", "too_light", "pain", "time", "equipment", "form", "other"]
 SEVERITIES = ["na", "low", "medium", "high"]
 
 
 def main():
-    base_model = "distilbert-base_uncased"
-    data_path = "data/train.csv"
-    out_dir = "artifacts/exception_model"
+    base_model = "distilbert-base-uncased"
+    data_path = Path(gary.__file__).parent / "data" / "train.csv"
+    PROJECT_ROOT = Path(__file__).resolve().parents[3]
+    out_dir = PROJECT_ROOT / "artifacts" / "exception_model"
+    out_dir.mkdir(parents=True, exist_ok=True)
     batch_size = 16
     epochs = 3
     lr = 2e-5
@@ -33,6 +36,8 @@ def main():
     )
 
     ds = ExceptionsDataset(data_path, base_model, label_maps, max_len=256)
+
+    print(ds)
 
     val_frac = 0.15
     val_size = int(val_frac * len(ds))
@@ -67,6 +72,7 @@ def main():
     
     best = math.inf
     for ep in range(1, epochs + 1):
+        print(f"Beginning epoch {ep}...")
         model.train()
         running = 0.0
         for step, batch in enumerate(train_loader, start=1):
@@ -76,7 +82,7 @@ def main():
 
             optim.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm(model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optim.step()
             sched.step()
 
@@ -94,7 +100,6 @@ def main():
                 f.write("EVENT_TYPES=" + ",".join(EVENT_TYPES) + "\n")
                 f.write("SEVERITIES=" + ",".join(SEVERITIES) + "\n")
             print(f"Saved best to {out_dir}")
-
 
 
 if __name__ == "__main__":

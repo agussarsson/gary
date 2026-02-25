@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "gary"
+version = "0.1.0"
+description = "A personal gym coach"
+readme = "README.md"
+requires-python = ">=3.10"
+
+authors = [
+    { name = "Arvid Gussarsson" }
+]
+
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "matplotlib>=3.7",
+    "scikit-learn>=1.3",
+    "scipy>=1.10",
+    "yfinance>=0.2",
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "python-dotenv",
+    "pydantic",
+    "transformers",
+    "datasets"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
