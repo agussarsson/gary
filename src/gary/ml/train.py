@@ -127,13 +127,13 @@ def main():
 
 
     for ep in range(1, epochs + 1):
-        print(f"Beginning epoch {ep}/{epochs+1}...")
+        print(f"Beginning epoch {ep}/{epochs}...")
         model.train()
         running = 0.0
         for step, batch in enumerate(train_loader, start=1):
             if (step - 1) % print_interval == 0:
                 print(f"\rBatch: {step}/{len(train_loader)}")
-                
+
             batch = {k: v.to(device) for k, v in batch.items()}
             out = model(**batch)
             loss = out["loss"]
