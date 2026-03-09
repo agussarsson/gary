@@ -13,10 +13,11 @@ from pathlib import Path
 
 from datetime import datetime
 
-from sklearn.metrics import f1_score, matthews_corrcoef
+from sklearn.metrics import f1_score, matthews_corrcoef, accuracy_score
 
 import json
 
+# return
 EVENT_TYPES = ["none", "too_heavy", "too_light", "pain", "time", "equipment", "form", "other"]
 SEVERITIES = ["na", "low", "medium", "high"]
 
@@ -31,23 +32,31 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    run_dir = PROJECT_ROOT / "runs" / run_name
+    run_dir = out_dir / "runs" / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    batch_size = 64
+    batch_size = 32
     epochs = 3
     lr = 2e-5
 
-    config = {
-        "batch_size": batch_size,
-        "epochs": epochs,
-        "lr": lr
-    }
+    # config = {
+    #     "batch_size": batch_size,
+    #     "epochs": epochs,
+    #     "lr": lr
+    # }
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Running on {device}.")
 
     seed = int(os.getenv("SEED", "42"))
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+    print(torch.__version__)
+    print(torch.version.cuda)
+    print(torch.cuda.is_available())
+    print(torch.cuda.get_device_name(0))
 
     label_maps = LabelMaps(
         event2id={k: i for i, k in enumerate(EVENT_TYPES)},
@@ -73,67 +82,68 @@ def main():
     optim = torch.optim.AdamW(model.parameters(), lr=lr)
 
     total_steps = epochs * len(train_loader)
-    warmup_steps = int(val_frac * total_steps)
+    warmup_steps = int(0.1 * total_steps)
     sched = get_linear_schedule_with_warmup(optim, warmup_steps, total_steps)
 
-    def eval_loss():
+    # ---------- Evaluation: loss only (for learning curves) ----------
+    def eval_epoch_loss(model, val_loader, device):
         model.eval()
-        losses = []
-
-        all_event_preds, all_event_labels = [], []
-        all_sev_preds, all_sev_labels = [], []
+        total_loss = 0.0
+        batches = 0
 
         with torch.no_grad():
             for batch in val_loader:
                 batch = {k: v.to(device) for k, v in batch.items()}
                 out = model(**batch)
-                losses.append(out["loss"].item())
+                total_loss += out["loss"].item()
+                batches += 1
 
-                # adjust these keys to match your dataset
-                event_labels = batch["event_label"]
-                sev_labels   = batch["sev_label"]
+        model.train()
+        return total_loss / max(1, batches)
 
-                # adjust these keys to match your model output
-                event_logits = out["event_logits"]
-                sev_logits   = out["sev_logits"]
 
-                event_preds = torch.argmax(event_logits, dim=1)
-                sev_preds   = torch.argmax(sev_logits, dim=1)
+    # ---------- Evaluation: metrics ----------
+    def evaluate_metrics(model, val_loader, device):
+        model.eval()
+        all_event_preds, all_event_true = [], []
+        all_sev_preds, all_sev_true = [], []
 
-                all_event_preds.extend(event_preds.cpu().numpy())
-                all_event_labels.extend(event_labels.cpu().numpy())
+        with torch.no_grad():
+            for batch in val_loader:
+                batch = {k: v.to(device) for k, v in batch.items()}
+                out = model(**batch)
 
-                all_sev_preds.extend(sev_preds.cpu().numpy())
-                all_sev_labels.extend(sev_labels.cpu().numpy())
+                ev_preds = out["event_logits"].argmax(dim=-1).cpu().numpy()
+                sv_preds = out["severity_logits"].argmax(dim=-1).cpu().numpy()
+
+                all_event_preds.extend(ev_preds)
+                all_event_true.extend(batch["event_labels"].cpu().numpy())
+                all_sev_preds.extend(sv_preds)
+                all_sev_true.extend(batch["severity_labels"].cpu().numpy())
 
         model.train()
 
-        val_loss = float(sum(losses) / max(1, len(losses)))
-
-        metrics = {
-            "val_loss": val_loss,
-            "event_macro_f1": f1_score(all_event_labels, all_event_preds, average="macro"),
-            "event_mcc": matthews_corrcoef(all_event_labels, all_event_preds),
-            "sev_macro_f1": f1_score(all_sev_labels, all_sev_preds, average="macro"),
-            "sev_mcc": matthews_corrcoef(all_sev_labels, all_sev_preds),
+        return {
+            "event_acc": accuracy_score(all_event_true, all_event_preds),
+            "event_f1": f1_score(all_event_true, all_event_preds, average="macro"),
+            "sev_acc": accuracy_score(all_sev_true, all_sev_preds),
+            "sev_f1": f1_score(all_sev_true, all_sev_preds, average="macro"),
         }
 
 
-        return losses, metrics
-    
-    print_interval = 50
-    best = math.inf
+    # ---------- Training Loop ----------
     train_losses = []
+    val_losses = []
+    metrics_history = []
 
+    best_val = float("inf")
 
     for ep in range(1, epochs + 1):
-        print(f"Beginning epoch {ep}/{epochs}...")
         model.train()
         running = 0.0
-        for step, batch in enumerate(train_loader, start=1):
-            if (step - 1) % print_interval == 0:
-                print(f"\rBatch: {step}/{len(train_loader)}")
 
+        for i, batch in enumerate(train_loader):
+            if (i + 1) % 100 == 0 or i == 0: print(f"Batch {i+1}/{len(train_loader)}...")
             batch = {k: v.to(device) for k, v in batch.items()}
             out = model(**batch)
             loss = out["loss"]
@@ -146,34 +156,60 @@ def main():
 
             running += loss.item()
 
+        # --- Epoch metrics ---
+        train_epoch_loss = running / len(train_loader)
+        val_epoch_loss = eval_epoch_loss(model, val_loader, device)
+        metrics = evaluate_metrics(model, val_loader, device)
 
-        val_losses, metrics = eval_loss()
-        train_avg = running / max(1, len(train_loader))
-        train_losses.append(train_avg)
-        print(f"epoch={ep} train_loss={train_avg:.4f} val_loss={metrics['val_loss']:.4f}")
+        train_losses.append(train_epoch_loss)
+        val_losses.append(val_epoch_loss)
+        metrics_history.append(metrics)
 
-        # Save best model
+        print(
+            f"epoch={ep} "
+            f"train_loss={train_epoch_loss:.4f} "
+            f"val_loss={val_epoch_loss:.4f} "
+            f"event_f1={metrics['event_f1']:.3f} "
+            f"sev_f1={metrics['sev_f1']:.3f}"
+        )
 
-        if metrics["val_loss"] < best:
-            torch.save(model.state_dict(), os.path.join(run_dir, "model.pt"))
-            with open(os.path.join(run_dir, "labels.txt"), "w", encoding="utf-8") as f:
-                f.write("EVENT_TYPES=" + ",".join(EVENT_TYPES) + "\n")
-                f.write("SEVERITIES=" + ",".join(SEVERITIES) + "\n")
-            print(f"Saved best to {run_dir}")
-            best = metrics["val_loss"]
+        # --- Save best model ---
+        if val_epoch_loss < best_val:
+            best_val = val_epoch_loss
+            torch.save(model.state_dict(), run_dir / "model.pt")
+            print("Saved new best model.")
 
-            plt.plot(train_losses, label="Train-Losses")
-            plt.plot(val_losses, label="Val-Losses")
-            plt.legend()
-            plt.savefig(run_dir / 'losses.png')
-            plt.close()
 
-            with open(run_dir / "config.json", "w") as f:
-                json.dump(config, f)
-            
-            with open(run_dir / "metrics.json"):
-                json.dump(metrics, f)
+    # ---------- Save metrics ----------
+    summary = {
+        "train_loss": train_losses,
+        "val_loss": val_losses,
+        "metrics": metrics_history,
+    }
 
+    with open(run_dir / "metrics.json", "w") as f:
+        json.dump(summary, f)
+
+    with open(run_dir / "config.json", "w") as f:
+        json.dump({
+            "batch_size": batch_size,
+            "epochs": epochs,
+            "lr": lr
+        }, f)
+
+
+    # ---------- Plot loss curves ----------
+    plt.figure()
+    plt.plot(train_losses, marker="o", label="Train")
+    plt.plot(val_losses, marker="s", label="Validation")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(run_dir / "loss_curve.png")
+    plt.close()
+
+    print("Done.")
 
 
 if __name__ == "__main__":

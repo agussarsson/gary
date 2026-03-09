@@ -49,7 +49,7 @@ def main():
 
     test_ds = ExceptionsDataset(data_path, base_model, label_maps, max_len=256)
 
-    test_loader = DataLoader(test_ds, batch_size=config["batch_size"], shuffle=True)
+    test_loader = DataLoader(test_ds, batch_size=config["batch_size"], shuffle=False)
 
     model = MultiHeadClassifier(base_model, num_event_types=len(EVENT_TYPES), num_severities=len(SEVERITIES))
     model.to(device)
@@ -78,10 +78,10 @@ def main():
             sev_preds = torch.argmax(sev_logits, dim=1)
 
             all_event_preds.extend(event_preds.cpu().numpy())
-            all_event_labels.extend(batch["event_label"].cpu().numpy())
+            all_event_labels.extend(batch["event_labels"].cpu().numpy())
 
             all_sev_preds.extend(sev_preds.cpu().numpy())
-            all_sev_labels.extend(batch["sev_label"].cpu().numpy())
+            all_sev_labels.extend(batch["severity_labels"].cpu().numpy())
 
     event_f1 = f1_score(all_event_labels, all_event_preds, average="macro")
     event_mcc = matthews_corrcoef(all_event_labels, all_event_preds)
@@ -96,7 +96,7 @@ def main():
         "sev_mcc": sev_mcc
     }
 
-    with open(out_dir, "w") as f:
+    with open(out_dir / "metrics.json", "w") as f:
         json.dump(metrics, f)
 
 
