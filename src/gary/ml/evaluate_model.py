@@ -96,6 +96,8 @@ def main():
         "sev_mcc": sev_mcc
     }
 
+    print(f"event_macro_f1: {event_f1} | event_mcc: {event_mcc} | severity_macro_f1: {sev_f1} | sev_mcc: {sev_mcc}")
+
     with open(out_dir / "metrics.json", "w") as f:
         json.dump(metrics, f)
 
