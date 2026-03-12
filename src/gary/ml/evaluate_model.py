@@ -13,10 +13,14 @@ import os
 import argparse
 
 
-EVENT_TYPES = ["none", "too_heavy", "too_light", "pain", "time", "equipment", "form", "other"]
-SEVERITIES = ["na", "low", "medium", "high"]
-
 def main():
+
+    label_path = Path(__file__).parent / "label_map.json"
+    with open(label_path, "r") as f:
+        labels = json.loads(f)
+    
+    EVENT_TYPES = labels["event_types"]
+    SEVERITIES = labels["severities"]
 
     base_model = "distilbert-base-uncased"
 

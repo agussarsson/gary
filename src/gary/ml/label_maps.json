@@ -1,0 +1,4 @@
+{
+  "event_types": ["none", "too_heavy", "too_light", "pain", "time", "equipment", "form", "other"],
+  "severities": ["na", "low", "medium", "high"]
+}
