@@ -42,12 +42,6 @@ def main():
     epochs = 3
     lr = 2e-5
 
-    # config = {
-    #     "batch_size": batch_size,
-    #     "epochs": epochs,
-    #     "lr": lr
-    # }
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Running on {device}.")
 
@@ -199,6 +193,10 @@ def main():
             "epochs": epochs,
             "lr": lr
         }, f)
+
+
+    with open(run_dir / "label_map.json", "w") as f:
+        json.dump(labels)
 
 
     # ---------- Plot loss curves ----------
