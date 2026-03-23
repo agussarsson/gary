@@ -12,6 +12,10 @@ from .schemas import (
 )
 from .engine import adjust_workout, apply_adjustments
 
+from gary.ml.inference import ExceptionModel
+
+model = ExceptionModel("artifacts/production/exception_model")
+
 app = FastAPI()
 
 def get_db():
@@ -213,3 +217,103 @@ def apply_adjustments(session_id: UUID, db: Session = Depends(get_db)):
     return {"program_id": program_id, "program_json": adjusted_program, "adjustments": all_adjustments}
 
 
+@app.post("/sessions/{session_id}/workout-feedback")
+def workout_feedback(session_id: UUID, payload: dict, db: Session = Depends(get_db)):
+
+    user_text = payload["text"]
+
+    # Get program
+    session_row = db.execute(
+        text("SELECT program_id FROM sessions WHERE id = :id"),
+        {"id": str(session_id)}
+    ).mappings().first()
+
+    if not session_row:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    program_id = session_row["program_id"]
+
+    program_row = db.execute(
+        text("SELECT program_json FROM programs WHERE id = :id"),
+        {"id": str(program_id)}
+    ).mappings().first()
+
+    program_json = program_row["program_json"]
+
+    # Extract exercises
+    exercises = []
+    for day in program_json["days"]:
+        for ex in day["exercises"]:
+            exercises.append(ex["name"])
+
+    session_exercises = "; ".join(exercises)
+
+    # ML inference
+    events = []
+
+    for exercise in exercises:
+
+        pred = model.predict(exercise, session_exercises, user_text)
+
+        if pred["event_type"] == "none":
+            continue
+
+        db.execute(
+            text("""
+                INSERT INTO exception_events (
+                    session_id,
+                    exercise_name,
+                    event_type,
+                    severity,
+                    confidence,
+                    source,
+                    note
+                )
+                VALUES (
+                    :session_id,
+                    :exercise_name,
+                    :event_type,
+                    :severity,
+                    :confidence,
+                    'model',
+                    :note
+                )
+            """),
+            {
+                "session_id": str(session_id),
+                "exercise_name": exercise,
+                "event_type": pred["event_type"],
+                "severity": pred["severity"],
+                "confidence": pred["confidence"],
+                "note": user_text
+            }
+        )
+
+        events.append({
+            "exercise": exercise,
+            "event": pred["event_type"],
+            "severity": pred["severity"]
+        })
+
+    db.commit()
+
+    # Run adjustment engine
+    adjustments = []
+
+    for event in events:
+        adjustments.extend(adjust_workout(event))
+
+    adjusted_program = apply_adjustments(program_json, adjustments)
+
+    db.execute(
+        text("UPDATE programs SET program_json = CAST(:pj AS jsonb) WHERE id = :id"),
+        {"pj": json.dumps(adjusted_program), "id": program_id}
+    )
+
+    db.commit()
+
+    return {
+        "events_detected": events,
+        "adjustments": adjustments,
+        "updated_program": adjusted_program
+    }
