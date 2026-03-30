@@ -75,3 +75,38 @@ class DeliverExceptionEvent(BaseModel):
     note: Optional[str]
     confidence: Optional[float]
     source: Source
+
+class Exercise(BaseModel):
+    name: str
+    sets: int = Field(ge=1, le=10)
+    reps: str
+    load: Optional[float] = None
+    progression_rule: str = "increase_load_if_completed"
+
+class ProgramDay(BaseModel):
+    name: str
+    focus: str
+    exercises: List[Exercise]
+
+class ProgramJSON(BaseModel):
+    split: str
+    days_per_week: int = Field(ge=1, le=7)
+    goal: str
+    experience_level: str
+    notes: Optional[str] = None
+    days: List[ProgramDay]
+
+class ProgramCreate(BaseModel):
+    name: str
+    program_json: ProgramJSON
+
+class ProgramGenerateRequest(BaseModel):
+    goal: str
+    days_per_week: int
+    experience_level: str
+    preferences: list[str] = []
+    equipment: Optional[str] = None
+
+class ProgramRefineRequest(BaseModel):
+    program_json: ProgramJSON
+    feedback: str
