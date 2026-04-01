@@ -317,3 +317,24 @@ def workout_feedback(session_id: UUID, payload: dict, db: Session = Depends(get_
         "adjustments": adjustments,
         "updated_program": adjusted_program
     }
+
+# --- SAVE PROGRAM ---
+
+@app.post("/programs/save")
+def save_generated_program(payload: SaveGeneratedProgramRequest, db: Session = Depends(get_db)):
+    q = text("""
+        INSERT INTO programs (name, program_json)
+        VALUES (:name, CAST(:program_json AS json))
+        RETURNING id, name, program_json;
+    """)
+
+    row = db.execute(
+        q,
+        {
+            "name": payload.name,
+            "program_json": json.dumps(payload.program_json.model_dump())
+        }
+    ).mappings().one()
+
+    db.commit()
+    return dict(row)
