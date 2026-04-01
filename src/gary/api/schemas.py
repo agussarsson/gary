@@ -110,3 +110,7 @@ class ProgramGenerateRequest(BaseModel):
 class ProgramRefineRequest(BaseModel):
     program_json: ProgramJSON
     feedback: str
+
+class SaveGeneratedProgramRequest(BaseModel):
+    name: str
+    program_json: ProgramJSON
