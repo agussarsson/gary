@@ -58,8 +58,6 @@ def validate_generated_program(raw_output: str) -> ProgramJSON:
 def call_llm_for_program_generation(payload: ProgramGenerateRequest) -> ProgramJSON:
     prompt = build_program_generation_prompt(payload)
 
-    raw_output = some_llm_client_call(prompt)
-
     raw_output = model.generate_content(prompt)
 
     return validate_generated_program(raw_output.text)
