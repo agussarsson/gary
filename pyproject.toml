@@ -28,7 +28,8 @@ dependencies = [
     "python-dotenv",
     "pydantic",
     "transformers",
-    "datasets"
+    "datasets",
+    "google-generativeai"
 ]
 
 [tool.setuptools.packages.find]
