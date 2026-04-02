@@ -318,7 +318,11 @@ def workout_feedback(session_id: UUID, payload: dict, db: Session = Depends(get_
         "updated_program": adjusted_program
     }
 
-# --- SAVE PROGRAM ---
+# --- PROGRAM CREATION/EDITING ENDPOINTS ---
+
+@app.post("/programs/generate", response_model=ProgramJSON)
+def generate_program(payload: ProgramGenerateRequest):
+    return call_llm_for_program_generation(payload)
 
 @app.post("/programs/save")
 def save_generated_program(payload: SaveGeneratedProgramRequest, db: Session = Depends(get_db)):
