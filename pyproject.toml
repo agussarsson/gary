@@ -15,6 +15,8 @@ authors = [
 ]
 
 dependencies = [
+    "psycopg2-binary>=2.9",
+    "google-generativeai>=0.8",
     "torch>=2.0",
     "numpy>=1.23",
     "pandas>=1.5",
@@ -30,6 +32,12 @@ dependencies = [
     "transformers",
     "datasets"
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

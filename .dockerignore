@@ -1,0 +1,11 @@
+.git
+.github
+.cursor
+.venv
+venv
+__pycache__
+*.pyc
+.env
+artifacts
+web/node_modules
+web/.next
