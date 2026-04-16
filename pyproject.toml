@@ -30,7 +30,8 @@ dependencies = [
     "python-dotenv",
     "pydantic",
     "transformers",
-    "datasets"
+    "datasets",
+    "google-generativeai"
 ]
 
 [project.optional-dependencies]

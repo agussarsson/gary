@@ -1,6 +1,13 @@
 import json
 from gary.api.schemas import ProgramJSON, ProgramGenerateRequest
+import google.generativeai as genai
+import os
 
+try:
+    genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+    model = genai.GenerativeModel("gemini-1.5-flash")
+except:
+    print("No API key found.")
 
 def build_program_generation_prompt(payload: ProgramGenerateRequest) -> str:
     prefs = ", ".join(payload.preferences) if payload.preferences else "none"
@@ -45,3 +52,12 @@ The JSON must match exactly this schema:
 def validate_generated_program(raw_output: str) -> ProgramJSON:
     parsed = json.loads(raw_output)
     return ProgramJSON(**parsed)
+
+
+  
+def call_llm_for_program_generation(payload: ProgramGenerateRequest) -> ProgramJSON:
+    prompt = build_program_generation_prompt(payload)
+
+    raw_output = model.generate_content(prompt)
+
+    return validate_generated_program(raw_output.text)
